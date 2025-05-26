@@ -1,3 +1,4 @@
+cat > mia-to-dropbox/.github/workflows/mia.yml << 'EOF'
 name: Copy MIA to Dropbox
 on:
   workflow_dispatch:
@@ -9,11 +10,11 @@ jobs:
         run: |
           curl -fsSL https://rclone.org/install.sh | sudo bash
           sudo apt-get update && sudo apt-get install -y wget
-      - name: Scan Marxists.org
+      - name: Scan Marxists.org (toutes ressources)
         run: |
           wget --spider -r -np -nv -e robots=off https://www.marxists.org/ \
             | awk '/^--/ {print $3}' \
-            | grep -E '\.(pdf|epub|mobi|txt|html?|htm)$' \
+            | grep -v '/$' \
             | sort -u > urls.txt
       - name: Stream to Dropbox
         env:
@@ -23,3 +24,4 @@ jobs:
             rclone copyurl "$u" "dropbox:/MIA${u#https://www.marxists.org}" \
               --dropbox-token "$DROPBOX_TOKEN" --auto-filename --no-update-modtime
           done < urls.txt
+EOF
