@@ -12,9 +12,9 @@ jobs:
       - name: Scan Marxists.org (toutes ressources, streaming)
         run: |
           wget --spider -r -np -nv -e robots=off https://www.marxists.org/ 2>&1 \
-            | awk '/^--/ {print $3}' \          # extrait chaque URL découverte  [oai_citation:3‡GitHub](https://github.com/github/vscode-github-actions/issues/126?utm_source=chatgpt.com)
-            | grep -v '/$' \                    # conserve tout ce qui n’est pas un répertoire 
-            | tee urls.txt \                    # écrit ET affiche chaque URL au fur et à mesure  [oai_citation:4‡Medium](https://mihirpopat.medium.com/monitoring-and-troubleshooting-github-actions-runs-and-logs-613cef9afd01?utm_source=chatgpt.com)
+            | awk '/^--/ {print $3}' \
+            | grep -v '/$' \
+            | tee urls.txt \
             | sort -u -o urls.txt
       - name: Stream to Dropbox
         env:
