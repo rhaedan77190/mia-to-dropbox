@@ -9,18 +9,16 @@ jobs:
         run: |
           curl -fsSL https://rclone.org/install.sh | sudo bash
           sudo apt-get update && sudo apt-get install -y wget
-      - name: Scan Marxists.org (toutes ressources, streaming)
-        run: |
-          wget --spider -r -np -nv -e robots=off https://www.marxists.org/ 2>&1 \
-            | awk '/^--/ {print $3}' \
-            | grep -v '/$' \
-            | tee urls.txt \
-            | sort -u -o urls.txt
-      - name: Stream to Dropbox
+      - name: Mirror & Stream all resources
         env:
           DROPBOX_TOKEN: ${{ secrets.DROPBOX_TOKEN }}
         run: |
-          while read -r u; do
-            rclone copyurl "$u" "dropbox:/MIA${u#https://www.marxists.org}" \
-              --dropbox-token "$DROPBOX_TOKEN" --auto-filename --no-update-modtime
-          done < urls.txt
+          set -euo pipefail
+          wget --spider -r -np -nv -e robots=off https://www.marxists.org/ 2>&1 \
+            | awk '/^--/ {print $3}' \
+            | grep -v '/$' \
+            | while read -r u; do
+                echo "🔄 $u"
+                rclone copyurl "$u" "dropbox:/MIA${u#https://www.marxists.org}" \
+                  --dropbox-token "$DROPBOX_TOKEN" --auto-filename --no-update-modtime
+              done
