@@ -1,0 +1,25 @@
+name: Copy MIA to Dropbox
+on:
+  workflow_dispatch:
+jobs:
+  transfer:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Install rclone & wget
+        run: |
+          curl -fsSL https://rclone.org/install.sh | sudo bash
+          sudo apt-get update && sudo apt-get install -y wget
+      - name: Scan Marxists.org
+        run: |
+          wget --spider -r -np -nv -e robots=off https://www.marxists.org/ \
+            | awk '/^--/ {print $3}' \
+            | grep -E '\.(pdf|epub|mobi|txt|html?|htm)$' \
+            | sort -u > urls.txt
+      - name: Stream to Dropbox
+        env:
+          DROPBOX_TOKEN: ${{ secrets.DROPBOX_TOKEN }}
+        run: |
+          while read -r u; do
+            rclone copyurl "$u" "dropbox:/MIA${u#https://www.marxists.org}" \
+              --dropbox-token "$DROPBOX_TOKEN" --auto-filename --no-update-modtime
+          done < urls.txt
