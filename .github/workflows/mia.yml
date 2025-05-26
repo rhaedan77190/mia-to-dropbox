@@ -1,24 +1,20 @@
-name: Copy MIA to Dropbox
-on:
-  workflow_dispatch:
+name: Debug MIA scan
+on: workflow_dispatch
 jobs:
-  transfer:
+  debug:
     runs-on: ubuntu-latest
     steps:
-      - name: Install rclone & wget
+      - name: Install tools
         run: |
           curl -fsSL https://rclone.org/install.sh | sudo bash
-          sudo apt-get update && sudo apt-get install -y wget
-      - name: Mirror & Stream all resources
-        env:
-          DROPBOX_TOKEN: ${{ secrets.DROPBOX_TOKEN }}
+          sudo apt-get update && sudo apt-get install -y wget moreutils
+      - name: Test scan depth=1 + unbuffer + tee
         run: |
           set -euo pipefail
-          wget --spider -r -np -nv -e robots=off https://www.marxists.org/ 2>&1 \
+          wget --spider -r -l1 -np -nv -e robots=off https://www.marxists.org/ 2>&1 \
             | awk '/^--/ {print $3}' \
             | grep -v '/$' \
+            | stdbuf -oL tee test_urls.txt \
             | while read -r u; do
                 echo "🔄 $u"
-                rclone copyurl "$u" "dropbox:/MIA${u#https://www.marxists.org}" \
-                  --dropbox-token "$DROPBOX_TOKEN" --auto-filename --no-update-modtime
               done
